@@ -7,7 +7,7 @@ import threading
 CACHE_POLICY = True  # whether to cache responses or not
 # the maximum time that the response can be cached for (in seconds)
 CACHE_CONTROL = 2 ** 16 - 1
-STOP_CMD = "q"
+STOP_CMD = "a" #Specipic stop command.
 
 
 def calculate(expression: api.Expr, steps: list[str] = []) -> tuple[numbers.Real, list[api.Expression]]:
@@ -89,10 +89,9 @@ def server(host: str, port: int) -> None:
         server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
         # Prepare the server socket
-        # * Fill in start (1)
-        server_socket.bind((host, port))  # Fill in start (1)
-        server_socket.listen(5)
-        # * Fill in end (1)
+
+        server_socket.bind((host, port)) #Connecting the socket to the ip address+port to start listening to the incoming connections.
+        server_socket.listen() #Take the connection request out of my request queue.
 
         threads = []
         print(f"Listening on {host}:{port}")
@@ -100,8 +99,8 @@ def server(host: str, port: int) -> None:
         while True:
             try:
                 # Establish connection with client.
-
-                client_socket, address = server_socket.accept()  # * Fill in start (2) # * Fill in end (2)
+                #Will accept the connection and return a socket that specifically belongs to that connection:
+                client_socket, address = server_socket.accept()
 
                 # Create a new thread to handle the client request
                 thread = threading.Thread(target=client_handler, args=(
@@ -125,12 +124,14 @@ def client_handler(client_socket: socket.socket, client_address: tuple[str, int]
     with client_socket:  # closes the socket when the block is exited
         print(f"Conection established with {client_addr}")
         while True:
-
-            data = client_socket.recv(api.BUFFER_SIZE)  # * Fill in start (3) # * Fill in end (3)
+            #Reads data from the client,up to the size defined in the api.BUFFER_SIZE
+            #It allows the server to process the requests received from the client.
+            data = client_socket.recv(api.BUFFER_SIZE)
             if not data:  # * Change in start (1)
                 break
                 # * Change in end (1)
             try:
+                #If the data received from the client matches the stop command-the connection is closed.
                 if data == STOP_CMD:
                     break
 
@@ -148,19 +149,18 @@ def client_handler(client_socket: socket.socket, client_address: tuple[str, int]
                 print(
                     f"{client_prefix} Sending response of length {len(response)} bytes")
 
-                # * Fill in start (4)
+                #Send the answer ready back to the client:
                 client_socket.sendall(response)
-                # * Fill in end (4)
 
             except Exception as e:
                 print(f"Unexpected server error: {e}")
                 client_socket.sendall(api.CalculatorHeader.from_error(
                     e, api.CalculatorHeader.STATUS_SERVER_ERROR, CACHE_POLICY, CACHE_CONTROL).pack())
 
-    # * Change in start (2)
+
+    #Close the connection:
     client_socket.close()
     print(f"{client_prefix} Connection closed")
-    # * Change in end (2)
 
 
 if __name__ == '__main__':

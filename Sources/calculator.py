@@ -155,7 +155,7 @@ class BinaryOperator(Operator):
 
 class BinaryExpr(Expression):
     '''
-    A Binary expression is an expression of the form <Expression1> <BinaryOperator> <Expression2>
+    A Binary expression is an expression of the form <Expression1> <BinaryOperator> <Expression2> 
     (where <Expression1> and <Expression2> are left and right operands respectively)
     '''
 

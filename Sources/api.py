@@ -7,11 +7,13 @@ import warnings
 import time
 
 # Predefined variables
-BUFFER_SIZE = 65536  # The buffer size is the maximum amount of data that can be received at once
-DEFAULT_SERVER_HOST = "127.0.0.1"  # The default host for the server
-DEFAULT_SERVER_PORT = 9997  # The default port for the server
-DEFAULT_PROXY_HOST = "127.0.0.1"  # The default host for the proxy
-DEFAULT_PROXY_PORT = 9998  # The default port for the proxy
+BUFFER_SIZE = 65536 # The buffer size is the maximum amount of data that can be received at once
+DEFAULT_SERVER_HOST = "127.0.0.1" # The default host for the server
+DEFAULT_SERVER_PORT = 9999 # The default port for the server
+DEFAULT_PROXY_HOST = "127.0.0.1" # The default host for the proxy
+DEFAULT_PROXY_PORT = 9998 # The default port for the proxy
+
+
 
 # ========================================================================
 # ============================= Protocol API =============================
@@ -55,7 +57,7 @@ protocol:
     The data of the packet
     It's at most 65440 bits because the total length is 16 bits, and the minimum value is 12 bytes (header only)
     2^16 - 12*8 = 65440
-
+    
 
  0                   1                   2                   3
  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
@@ -81,25 +83,23 @@ Cache Control: 16 bits = 2 bytes -> H
 Padding: 16 bits = 2 bytes -> 2x
 '''
 
-
 class CalculatorHeader:
     HEADER_FORMAT: typing.Final[str] = '!LHHHxx'
     HEADER_MIN_LENGTH: typing.Final[int] = struct.calcsize(HEADER_FORMAT)
     # Big enough to hold the header and a lot of data
-    HEADER_MAX_LENGTH: typing.Final[int] = 2 ** 16
+    HEADER_MAX_LENGTH: typing.Final[int] = 2**16
     HEADER_MAX_DATA_LENGTH: typing.Final[int] = HEADER_MAX_LENGTH - \
-                                                HEADER_MIN_LENGTH
+        HEADER_MIN_LENGTH
 
     # 16 bits -> 2**16 possible values -> 0 to 2**16 - 1
-    MAX_CACHE_CONTROL: typing.Final[int] = 2 ** 16 - 1
-
+    MAX_CACHE_CONTROL: typing.Final[int] = 2**16 - 1
+    
     STATUS_OK: typing.Final[int] = 200
     STATUS_CLIENT_ERROR: typing.Final[int] = 400
     STATUS_SERVER_ERROR: typing.Final[int] = 500
     STATUS_UNKNOWN: typing.Final[int] = 999
 
-    def __init__(self, unix_time_stamp: int, total_length: typing.Optional[int], reserved: int, cache_result: bool,
-                 show_steps: bool, is_request: bool, status_code: int, cache_control: int, data: bytes = b'') -> None:
+    def __init__(self, unix_time_stamp: int, total_length: typing.Optional[int], reserved: int, cache_result: bool, show_steps: bool, is_request: bool, status_code: int, cache_control: int, data: bytes = b'') -> None:
         self.unix_time_stamp = unix_time_stamp
         self.total_length = total_length
         if self.total_length is None:
@@ -156,9 +156,7 @@ class CalculatorHeader:
         return reserved, bool(cache_result), bool(show_steps), bool(is_request), status_code
 
     def pack(self) -> bytes:
-        return struct.pack(self.HEADER_FORMAT, self.unix_time_stamp, self.total_length,
-                           self.pack_flags(self.reserved, self.cache_result, self.show_steps, self.is_request,
-                                           self.status_code), self.cache_control) + self.data
+        return struct.pack(self.HEADER_FORMAT, self.unix_time_stamp, self.total_length, self.pack_flags(self.reserved, self.cache_result, self.show_steps, self.is_request, self.status_code), self.cache_control) + self.data
 
     @classmethod
     def unpack(cls, data: bytes) -> 'CalculatorHeader':
@@ -169,43 +167,31 @@ class CalculatorHeader:
             cls.HEADER_FORMAT, data[:cls.HEADER_MIN_LENGTH])
         reserved, cache_result, show_steps, is_request, status_code = cls.unpack_flags(
             flags)
-        return cls(unix_time_stamp=unix_time_stamp, total_length=total_length, reserved=reserved,
-                   cache_result=cache_result, show_steps=show_steps, is_request=is_request, status_code=status_code,
-                   cache_control=cache_control, data=data[cls.HEADER_MIN_LENGTH:])
-
+        return cls(unix_time_stamp=unix_time_stamp, total_length=total_length, reserved=reserved, cache_result=cache_result, show_steps=show_steps, is_request=is_request, status_code=status_code, cache_control=cache_control, data=data[cls.HEADER_MIN_LENGTH:])
+    
+    
     @classmethod
     def from_request(cls, data: bytes, show_steps: bool, cache_result: bool, cache_control: int) -> 'CalculatorHeader':
-        return cls(unix_time_stamp=int(time.time()), total_length=None, reserved=0, cache_result=cache_result,
-                   show_steps=show_steps, is_request=True, status_code=0, cache_control=cache_control, data=data)
-
+        return cls(unix_time_stamp=int(time.time()), total_length=None, reserved=0, cache_result=cache_result, show_steps=show_steps, is_request=True, status_code=0, cache_control=cache_control, data=data)
+    
     @classmethod
-    def from_expression(cls, expr: Expression, show_steps: bool, cache_result: bool,
-                        cache_control: int) -> 'CalculatorHeader':
-        return cls.from_request(data=pickle.dumps(expr), show_steps=show_steps, cache_result=cache_result,
-                                cache_control=cache_control)
-
+    def from_expression(cls, expr: Expression, show_steps: bool, cache_result: bool, cache_control: int) -> 'CalculatorHeader':
+        return cls.from_request(data=pickle.dumps(expr), show_steps=show_steps, cache_result=cache_result, cache_control=cache_control)
+    
     @classmethod
-    def from_response(cls, data: bytes, status_code: int, show_steps: bool, cache_result: bool,
-                      cache_control: int) -> 'CalculatorHeader':
-        return cls(unix_time_stamp=int(time.time()), total_length=None, reserved=0, cache_result=cache_result,
-                   show_steps=show_steps, is_request=False, status_code=status_code, cache_control=cache_control,
-                   data=data)
-
+    def from_response(cls, data: bytes, status_code: int, show_steps: bool, cache_result: bool, cache_control: int) -> 'CalculatorHeader':
+        return cls(unix_time_stamp=int(time.time()), total_length=None, reserved=0, cache_result=cache_result, show_steps=show_steps, is_request=False, status_code=status_code, cache_control=cache_control, data=data)
+    
     @classmethod
-    def from_result(cls, result: numbers.Real, steps: list[str], cache_result: bool,
-                    cache_control: int) -> 'CalculatorHeader':
-        return cls.from_response(data=pickle.dumps((result, steps)), status_code=CalculatorHeader.STATUS_OK,
-                                 show_steps=bool(steps), cache_result=cache_result, cache_control=cache_control)
-
+    def from_result(cls, result: numbers.Real, steps: list[str], cache_result: bool, cache_control: int) -> 'CalculatorHeader':
+        return cls.from_response(data=pickle.dumps((result, steps)), status_code=CalculatorHeader.STATUS_OK, show_steps=bool(steps), cache_result=cache_result, cache_control=cache_control)
+    
     @classmethod
-    def from_error(cls, error: Exception, status_code: int, cache_result: bool,
-                   cache_control: int) -> 'CalculatorHeader':
-        return cls.from_response(data=pickle.dumps(error), status_code=status_code, show_steps=False,
-                                 cache_result=cache_result, cache_control=cache_control)
-
+    def from_error(cls, error: Exception, status_code: int, cache_result: bool, cache_control: int) -> 'CalculatorHeader':
+        return cls.from_response(data=pickle.dumps(error), status_code=status_code, show_steps=False, cache_result=cache_result, cache_control=cache_control)
+    
     def __bytes__(self) -> bytes:
         return self.pack()
-
 
 def data_to_expression(header: CalculatorHeader) -> Expression:
     try:
@@ -218,20 +204,16 @@ def data_to_expression(header: CalculatorHeader) -> Expression:
     except Exception as e:
         raise ValueError('Received data is not an Expression2') from e
 
-
 def data_to_result(header: CalculatorHeader) -> typing.Tuple[numbers.Real, list[str]]:
     try:
         result = pickle.loads(header.data)
-        if not isinstance(result, tuple) or len(result) != 2 or not isinstance(result[0],
-                                                                               numbers.Real) or not isinstance(
-                result[1], list):
+        if not isinstance(result, tuple) or len(result) != 2 or not isinstance(result[0], numbers.Real) or not isinstance(result[1], list):
             raise ValueError('Received data is not a valid result')
         return result
     except pickle.UnpicklingError as e:
         raise ValueError('Received data could not be deserialized') from e
     except Exception as e:
         raise ValueError('Received data is not a valid result') from e
-
 
 def data_to_error(header: CalculatorHeader) -> Exception:
     try:
@@ -244,18 +226,16 @@ def data_to_error(header: CalculatorHeader) -> Exception:
     except Exception as e:
         raise ValueError('Received data is not an Exception') from e
 
-
 class CalculatorError(Exception):
     pass
 
-
 class CalculatorServerError(CalculatorError):
     pass
-
 
 class CalculatorClientError(CalculatorError):
     pass
 
 # endregion
+
 
 

@@ -1,7 +1,6 @@
 import socket
 import api
 import argparse
-import sys  # Import sys to use sys.exit()
 
 # region Predefined
 
@@ -61,6 +60,7 @@ def client(server_address: tuple[str, int], show_steps: bool = False, cache_resu
 
     try:
         while True:
+            #Gives the user to choose which one he wants to see thr  calculation of:
             print("Choose a calculation option:")
             print("1. max(2, 3) + 3")
             print("2. 3 + ((4 * 2) / ((1 - 5) * (2 * 3)))")
@@ -92,11 +92,14 @@ def client(server_address: tuple[str, int], show_steps: bool = False, cache_resu
                 return
             else:
                 print("Invalid choice..please try again")
+                #Gives us to choose again(until we choose 10):
                 continue
+
 
             if not client_socket:
                 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 client_socket.connect(server_address)
+                #The connection is opened only once when it is first required:
                 print(f"{server_prefix} Connection established")
 
             request = api.CalculatorHeader.from_expression(
@@ -122,6 +125,7 @@ def client(server_address: tuple[str, int], show_steps: bool = False, cache_resu
 if __name__ == "__main__":
     arg_parser = argparse.ArgumentParser(description="A Calculator Client.")
 
+    #Connect to the proxy automatically without the user having to specify the port themselves on each session:
     arg_parser.add_argument("-p", "--port", type=int,
                             default=api.DEFAULT_PROXY_PORT, help="The port to connect to.")
     arg_parser.add_argument("-H", "--host", type=str,

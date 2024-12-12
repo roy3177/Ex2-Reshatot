@@ -84,10 +84,8 @@ def proxy(proxy_address: tuple[str, int], server_adress: tuple[str, int]) -> Non
         proxy_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
         # Prepare the proxy socket
-        # * Fill in start (1)
-        proxy_socket.bind(proxy_address)  # binding to our proxy socket an IP address and a port number.
-        proxy_socket.listen()  # making our proxy listen for incoming TCP requests.
-        # * Fill in end (1)
+        proxy_socket.bind(proxy_address)  # binding to the proxy socket an IP address and a port number.
+        proxy_socket.listen()  # making the proxy listen for incoming TCP requests.
 
         threads = []
         print(f"Listening on {proxy_address[0]}:{proxy_address[1]}")
@@ -97,8 +95,9 @@ def proxy(proxy_address: tuple[str, int], server_adress: tuple[str, int]) -> Non
                 # Establish connection with client.
                 # Accepts a connection from a client. Returns a new socket for the client communication
                 # (client_socket) and the client's address (client_address).
+
+                #Recieves an incoming connection and returns object to the communication with the client+the address of the client:
                 client_socket, client_address =  proxy_socket.accept()
-                # * Fill in start (2) # * Fill in end (2)
 
 
                 # Create a new thread to handle the client request
@@ -124,9 +123,8 @@ def client_handler(client_socket: socket.socket, client_address: tuple[str, int]
         while True:
             # Receive data from the client
 
-            # * Fill in start (3)
-            data = client_socket.recv(api.BUFFER_SIZE) ## # Receives data from the client via the client_socket, up to the specified buffer size.
-            # * Fill in end (3)
+            # Receives data from the client via the client_socket:
+            data = client_socket.recv(api.BUFFER_SIZE)
 
 
 
@@ -163,9 +161,8 @@ def client_handler(client_socket: socket.socket, client_address: tuple[str, int]
                     f"{client_prefix} Sending response of length {len(response)} bytes")
 
                 # Send the response back to the client
-                # * Fill in start (4)
-                client_socket.sendall(response)# Sends the entire response back to the client through the client_socket.
-                # * Fill in end (4)
+                # Sends the entire response back to the client:
+                client_socket.sendall(response)
 
             except Exception as e:
                 print(f"Unexpected server error: {e}")
